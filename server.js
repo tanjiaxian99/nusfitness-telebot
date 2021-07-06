@@ -311,7 +311,29 @@ const facilities = [
 
 // Show slots for specified facility and date
 bot.action(/\w{3}\s\w{3}\s\d{2}\s\d{4}/, (ctx) => {
-  const [facility, date] = ctx.match.input.split("_");
+  let [facility, date] = ctx.match.input.split("_");
+  facility = facilities.find((e) => e.name === facility);
+  date = new Date(date);
+
+  const day = date.getDay();
+  const hours =
+    day % 7 === 0 || day % 7 === 6
+      ? facility.weekendHours
+      : facility.weekdayHours;
+  const buttons = hours.map((e) => Markup.button.callback(e, e));
+
+  ctx.reply(
+    "Select a slot to book or cancel",
+    Markup.inlineKeyboard(
+      buttons.reduce(function (rows, key, index) {
+        return (
+          (index % 2 == 0
+            ? rows.push([key])
+            : rows[rows.length - 1].push(key)) && rows
+        );
+      }, [])
+    )
+  );
 });
 
 bot.launch();
