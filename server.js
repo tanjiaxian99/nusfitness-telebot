@@ -94,6 +94,42 @@ bot.action("BookedSlots", async (ctx) => {
   );
 });
 
+bot.action("MakeAndCancel", (ctx) => {
+  ctx.reply(
+    "Which facility are you interested in?",
+    Markup.inlineKeyboard([
+      [
+        Markup.button.callback(
+          "Kent Ridge Swimming Pool",
+          "Kent Ridge Swimming Pool"
+        ),
+        Markup.button.callback(
+          "University Town Swimming Pool",
+          "University Town Swimming Pool"
+        ),
+      ],
+      [
+        Markup.button.callback("Kent Ridge Gym", "Kent Ridge Gym"),
+        Markup.button.callback(
+          "University Sports Centre Gym",
+          "University Sports Centre Gym"
+        ),
+      ],
+      [
+        Markup.button.callback("University Town Gym", "University Town Gym"),
+        Markup.button.callback(
+          "Wellness Outreach Gym",
+          "Wellness Outreach Gym"
+        ),
+      ],
+    ])
+  );
+});
+
+bot.action(/Pool|Gym/, (ctx) => {
+  console.log(ctx);
+});
+
 bot.launch();
 
 // Enable graceful stop
