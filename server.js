@@ -1,6 +1,7 @@
 const { Telegraf, Markup } = require("telegraf");
 const fetch = require("node-fetch");
 const { stripIndents } = require("common-tags");
+const { addDays } = require("date-fns");
 require("dotenv").config();
 
 const bot = new Telegraf(process.env.TOKEN);
@@ -94,6 +95,7 @@ bot.action("BookedSlots", async (ctx) => {
   );
 });
 
+// Facility selector
 bot.action("MakeAndCancel", (ctx) => {
   ctx.reply(
     "Which facility are you interested in?",
@@ -126,8 +128,190 @@ bot.action("MakeAndCancel", (ctx) => {
   );
 });
 
-bot.action(/Pool|Gym/, (ctx) => {
-  console.log(ctx);
+// Date selector
+bot.action(/Pool$|Gym$/, (ctx) => {
+  const now = new Date();
+  let dates = [];
+  for (let i = 0; i < 3; i++) {
+    dates[i] = addDays(now, i).toDateString();
+  }
+  ctx.reply(
+    "Which date would you like to pick?",
+    Markup.inlineKeyboard(
+      dates.map((e) => Markup.button.callback(e, `${ctx.match.input}_${e}`))
+    )
+  );
+});
+
+// Facility list
+const facilities = [
+  {
+    name: "Kent Ridge Swimming Pool",
+    weekdayHours: [
+      "0730",
+      "0900",
+      "1000",
+      "1100",
+      "1200",
+      "1300",
+      "1400",
+      "1500",
+      "1600",
+      "1700",
+      "1800",
+      "1900",
+      "2000",
+    ],
+    weekendHours: [
+      "0900",
+      "1000",
+      "1100",
+      "1200",
+      "1300",
+      "1400",
+      "1500",
+      "1600",
+      "1700",
+      "1800",
+    ],
+  },
+  {
+    name: "University Town Swimming Pool",
+    weekdayHours: [
+      "0730",
+      "0900",
+      "1000",
+      "1100",
+      "1200",
+      "1300",
+      "1400",
+      "1500",
+      "1600",
+      "1700",
+      "1800",
+      "1900",
+      "2000",
+    ],
+    weekendHours: [
+      "0900",
+      "1000",
+      "1100",
+      "1200",
+      "1300",
+      "1400",
+      "1500",
+      "1600",
+      "1700",
+      "1800",
+    ],
+  },
+  {
+    name: "Kent Ridge Gym",
+    weekdayHours: [
+      "1100",
+      "1200",
+      "1300",
+      "1400",
+      "1500",
+      "1600",
+      "1700",
+      "1800",
+      "1900",
+    ],
+    weekendHours: [],
+  },
+  {
+    name: "University Sports Centre Gym",
+    weekdayHours: [
+      "0900",
+      "1000",
+      "1100",
+      "1200",
+      "1300",
+      "1400",
+      "1500",
+      "1600",
+      "1700",
+      "1800",
+      "1900",
+      "2000",
+    ],
+    weekendHours: [
+      "0900",
+      "1000",
+      "1100",
+      "1200",
+      "1300",
+      "1400",
+      "1500",
+      "1600",
+      "1700",
+      "1800",
+    ],
+  },
+  {
+    name: "University Town Gym",
+    weekdayHours: [
+      "0700",
+      "0800",
+      "0900",
+      "1000",
+      "1100",
+      "1200",
+      "1300",
+      "1400",
+      "1500",
+      "1600",
+      "1700",
+      "1800",
+      "1900",
+      "2000",
+      "2100",
+    ],
+    weekendHours: [
+      "0700",
+      "0800",
+      "0900",
+      "1000",
+      "1100",
+      "1200",
+      "1300",
+      "1400",
+      "1500",
+      "1600",
+      "1700",
+      "1800",
+      "1900",
+      "2000",
+      "2100",
+    ],
+  },
+  {
+    name: "Wellness Outreach Gym",
+    weekdayHours: [
+      "0700",
+      "0800",
+      "0900",
+      "1000",
+      "1100",
+      "1200",
+      "1300",
+      "1400",
+      "1500",
+      "1600",
+      "1700",
+      "1800",
+      "1900",
+      "2000",
+      "2100",
+    ],
+    weekendHours: [],
+  },
+];
+
+// Show slots for specified facility and date
+bot.action(/\w{3}\s\w{3}\s\d{2}\s\d{4}/, (ctx) => {
+  const [facility, date] = ctx.match.input.split("_");
 });
 
 bot.launch();
