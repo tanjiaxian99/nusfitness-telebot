@@ -128,7 +128,7 @@ bot.action("MakeAndCancel", (ctx) => {
   );
 });
 
-// Date selector
+// Date selector, format = "Kent Ridge Swimming Pool"
 bot.action(/Pool$|Gym$/, (ctx) => {
   const now = new Date();
   let dates = [];
@@ -309,8 +309,8 @@ const facilities = [
   },
 ];
 
-// Show slots for specified facility and date
-bot.action(/\w{3}\s\w{3}\s\d{2}\s\d{4}/, async (ctx) => {
+// Show slots for specified facility and date, format = Kent Ridge Swimming Pool_Thu Jul 08 2021
+bot.action(/^[a-zA-Z ]+_\w{3}\s\w{3}\s\d{2}\s\d{4}$/, async (ctx) => {
   const [facilityName, date] = ctx.match.input.split("_");
   const facility = facilities.find((e) => e.name === facilityName);
   const assignedDate = new Date(date);
@@ -366,6 +366,7 @@ bot.action(/\w{3}\s\w{3}\s\d{2}\s\d{4}/, async (ctx) => {
     const hour = parseInt(hourString.slice(0, 2));
     const minute = parseInt(hourString.slice(2, 4));
     const date = new Date(assignedDate);
+
     date.setHours(hour, minute, 0, 0);
 
     const maxCap = 20; // adjust depending on facility
@@ -387,11 +388,16 @@ bot.action(/\w{3}\s\w{3}\s\d{2}\s\d{4}/, async (ctx) => {
     const currentTime = new Date().getTime();
     const disabled = slotsLeft <= 0 || slotTime <= currentTime;
 
-    return `${disabled ? "❌" : ""} ${
-      booked ? "✅" : ""
-    } ${hourString} (${slotsLeft} slots)`;
+    return {
+      text: `${disabled ? "❌ " : ""}${
+        booked ? "✅ " : ""
+      }${hourString} (${slotsLeft} slots)`,
+      hourString,
+    };
   });
-  const buttons = slots.map((e) => Markup.button.callback(e, e));
+  const buttons = slots.map((e) =>
+    Markup.button.callback(e.text, `${facilityName}_${date}_${e.hourString}`)
+  );
 
   // Reply
   ctx.reply(
@@ -408,10 +414,31 @@ bot.action(/\w{3}\s\w{3}\s\d{2}\s\d{4}/, async (ctx) => {
   );
 });
 
+// Disabled slots, format = ❌
 bot.action(/❌/, (ctx) => {
   return ctx.answerCbQuery(
     "Slot cannot be booked or cancelled. It is either full or its time has elapsed"
   );
+});
+
+// Book a slot, format = Kent Ridge Swimming Pool_Thu Jul 08 2021_2000
+bot.action(/[a-zA-Z ]+_\w{3}\s\w{3}\s\d{2}\s\d{4}_\d{4}/, (ctx) => {
+  const [facilityName, dateString, hourString] = ctx.match[0].split("_");
+  ctx.replyWithHTML(
+    stripIndents`
+    <b>Confirm booking?</b>\n
+    <b>Facility</b>: ${facilityName}\n
+    <b>Date</b>: ${dateString}\n
+    <b>Time</b>: ${hourString}`,
+    Markup.inlineKeyboard([
+      Markup.button.callback("Cancel", "Cancel"),
+      Markup.button.callback("Confirm booking", "ConfirmBooking"),
+    ])
+  );
+});
+
+bot.action("Cancel", (ctx) => {
+  ctx.deleteMessage();
 });
 
 bot.launch();
