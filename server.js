@@ -421,8 +421,8 @@ bot.action(/❌/, (ctx) => {
   );
 });
 
-// Book a slot, format = Kent Ridge Swimming Pool_Thu Jul 08 2021_2000
-bot.action(/[a-zA-Z ]+_\w{3}\s\w{3}\s\d{2}\s\d{4}_\d{4}/, (ctx) => {
+// Booking confirmation, format = Kent Ridge Swimming Pool_Thu Jul 08 2021_2000
+bot.action(/^[a-zA-Z ]+_\w{3}\s\w{3}\s\d{2}\s\d{4}_\d{4}$/, (ctx) => {
   const [facilityName, dateString, hourString] = ctx.match[0].split("_");
   ctx.replyWithHTML(
     stripIndents`
@@ -432,11 +432,48 @@ bot.action(/[a-zA-Z ]+_\w{3}\s\w{3}\s\d{2}\s\d{4}_\d{4}/, (ctx) => {
     <b>Time</b>: ${hourString}`,
     Markup.inlineKeyboard([
       Markup.button.callback("Cancel", "Cancel"),
-      Markup.button.callback("Confirm booking", "ConfirmBooking"),
+      Markup.button.callback("Confirm booking", `${ctx.match[0]}_Book`),
     ])
   );
 });
 
+// Make a booking, format = Kent Ridge Swimming Pool_Thu Jul 08 2021_2000_Book
+bot.action(
+  /^[a-zA-Z ]+_\w{3}\s\w{3}\s\d{2}\s\d{4}_\d{4}_Book$/,
+  async (ctx) => {
+    const [facilityName, dateString, hourString] = ctx.match[0].split("_");
+    const date = new Date(dateString);
+    const hour = parseInt(hourString.slice(0, 2));
+    const minute = parseInt(hourString.slice(2, 4));
+    date.setHours(hour, minute, 0, 0);
+
+    const url = `${
+      process.env.NODE_ENV === "production"
+        ? "http://local.nusfitness.com:5000/"
+        : "https://salty-reaches-24995.herokuapp.com/"
+    }book`;
+
+    const res = await fetch(url, {
+      method: "post",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chatId: ctx.update.callback_query.from.id,
+        facility: facilityName,
+        date,
+      }),
+      credentials: "include",
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      ctx.reply("Your slot has been booked!");
+    } else {
+      ctx.reply("Slot has been fully booked :(");
+    }
+  }
+);
+
+// Cancel
 bot.action("Cancel", (ctx) => {
   ctx.deleteMessage();
 });
