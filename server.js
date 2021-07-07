@@ -310,17 +310,60 @@ const facilities = [
 ];
 
 // Show slots for specified facility and date
-bot.action(/\w{3}\s\w{3}\s\d{2}\s\d{4}/, (ctx) => {
-  let [facility, date] = ctx.match.input.split("_");
-  facility = facilities.find((e) => e.name === facility);
-  date = new Date(date);
+bot.action(/\w{3}\s\w{3}\s\d{2}\s\d{4}/, async (ctx) => {
+  const [facilityName, date] = ctx.match.input.split("_");
+  const facility = facilities.find((e) => e.name === facilityName);
+  const assignedDate = new Date(date);
 
-  const day = date.getDay();
+  // Get slot count
+  const url = `${
+    process.env.NODE_ENV === "production"
+      ? "http://local.nusfitness.com:5000/"
+      : "https://salty-reaches-24995.herokuapp.com/"
+  }slots`;
+  const res = await fetch(url, {
+    method: "post",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      facility: facilityName,
+      startDate: assignedDate,
+      endDate: addDays(assignedDate, 1),
+    }),
+    credentials: "include",
+  });
+  const data = await res.json();
+  const slotCount = data.map((e) => ({
+    date: new Date(e._id),
+    count: e.count,
+  }));
+
+  // Initialize buttons
+  const day = assignedDate.getDay();
   const hours =
     day % 7 === 0 || day % 7 === 6
       ? facility.weekendHours
       : facility.weekdayHours;
-  const buttons = hours.map((e) => Markup.button.callback(e, e));
+
+  const slotsLeft = hours.map((hourString) => {
+    const hour = parseInt(hourString.slice(0, 2));
+    const minute = parseInt(hourString.slice(2, 4));
+    const date = new Date(assignedDate);
+    date.setHours(hour, minute, 0, 0);
+
+    const maxCap = 20; // adjust depending on facility
+    let slotsLeft = maxCap;
+
+    // Retrieve number of slots left
+    const matchingSlot = slotCount.find(
+      (e) => e.date.getTime() === date.getTime()
+    );
+    if (matchingSlot) {
+      slotsLeft = maxCap - matchingSlot.count;
+    }
+
+    return `${hourString} [${slotsLeft}]`;
+  });
+  const buttons = slotsLeft.map((e) => Markup.button.callback(e, e));
 
   ctx.reply(
     "Select a slot to book or cancel",
@@ -335,7 +378,6 @@ bot.action(/\w{3}\s\w{3}\s\d{2}\s\d{4}/, (ctx) => {
     )
   );
 });
-
 bot.launch();
 
 // Enable graceful stop
