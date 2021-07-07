@@ -316,12 +316,12 @@ bot.action(/\w{3}\s\w{3}\s\d{2}\s\d{4}/, async (ctx) => {
   const assignedDate = new Date(date);
 
   // Get slot count
-  const url = `${
+  let url = `${
     process.env.NODE_ENV === "production"
       ? "http://local.nusfitness.com:5000/"
       : "https://salty-reaches-24995.herokuapp.com/"
   }slots`;
-  const res = await fetch(url, {
+  let res = await fetch(url, {
     method: "post",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -331,11 +331,29 @@ bot.action(/\w{3}\s\w{3}\s\d{2}\s\d{4}/, async (ctx) => {
     }),
     credentials: "include",
   });
-  const data = await res.json();
+  let data = await res.json();
   const slotCount = data.map((e) => ({
     date: new Date(e._id),
     count: e.count,
   }));
+
+  // Get booked slots
+  url = `${
+    process.env.NODE_ENV === "production"
+      ? "http://local.nusfitness.com:5000/"
+      : "https://salty-reaches-24995.herokuapp.com/"
+  }bookedSlots`;
+  res = await fetch(url, {
+    method: "post",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      chatId: ctx.update.callback_query.from.id,
+      facility: facility.name,
+    }),
+    credentials: "include",
+  });
+  data = await res.json();
+  const bookedSlots = data.map((e) => new Date(e.date));
 
   // Initialize buttons
   const day = assignedDate.getDay();
@@ -344,7 +362,7 @@ bot.action(/\w{3}\s\w{3}\s\d{2}\s\d{4}/, async (ctx) => {
       ? facility.weekendHours
       : facility.weekdayHours;
 
-  const slotsLeft = hours.map((hourString) => {
+  const slots = hours.map((hourString) => {
     const hour = parseInt(hourString.slice(0, 2));
     const minute = parseInt(hourString.slice(2, 4));
     const date = new Date(assignedDate);
@@ -361,10 +379,14 @@ bot.action(/\w{3}\s\w{3}\s\d{2}\s\d{4}/, async (ctx) => {
       slotsLeft = maxCap - matchingSlot.count;
     }
 
-    return `${hourString} [${slotsLeft}]`;
-  });
-  const buttons = slotsLeft.map((e) => Markup.button.callback(e, e));
+    // Determine if slot is booked
+    const booked = bookedSlots.find((e) => e.getTime() === date.getTime());
 
+    return `${booked ? "✅" : ""} ${hourString} (${slotsLeft} slots)`;
+  });
+  const buttons = slots.map((e) => Markup.button.callback(e, e));
+
+  // Reply
   ctx.reply(
     "Select a slot to book or cancel",
     Markup.inlineKeyboard(
@@ -378,6 +400,7 @@ bot.action(/\w{3}\s\w{3}\s\d{2}\s\d{4}/, async (ctx) => {
     )
   );
 });
+
 bot.launch();
 
 // Enable graceful stop
