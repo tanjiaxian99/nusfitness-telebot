@@ -1,7 +1,7 @@
 const { Telegraf, Markup } = require("telegraf");
 const fetch = require("node-fetch");
 const { stripIndents } = require("common-tags");
-const { addDays } = require("date-fns");
+const { addDays, addHours } = require("date-fns");
 require("dotenv").config();
 
 const bot = new Telegraf(process.env.TOKEN);
@@ -382,7 +382,14 @@ bot.action(/\w{3}\s\w{3}\s\d{2}\s\d{4}/, async (ctx) => {
     // Determine if slot is booked
     const booked = bookedSlots.find((e) => e.getTime() === date.getTime());
 
-    return `${booked ? "✅" : ""} ${hourString} (${slotsLeft} slots)`;
+    // Determine if slot is full or slot's time has elapsed
+    const slotTime = addHours(date, 1);
+    const currentTime = new Date().getTime();
+    const disabled = slotsLeft <= 0 || slotTime <= currentTime;
+
+    return `${disabled ? "❌" : ""} ${
+      booked ? "✅" : ""
+    } ${hourString} (${slotsLeft} slots)`;
   });
   const buttons = slots.map((e) => Markup.button.callback(e, e));
 
@@ -398,6 +405,12 @@ bot.action(/\w{3}\s\w{3}\s\d{2}\s\d{4}/, async (ctx) => {
         );
       }, [])
     )
+  );
+});
+
+bot.action(/❌/, (ctx) => {
+  return ctx.answerCbQuery(
+    "Slot cannot be booked or cancelled. It is either full or its time has elapsed"
   );
 });
 
