@@ -1,4 +1,5 @@
 const { Telegraf, Markup } = require("telegraf");
+const { updateMenu, retrieveMenu } = require("./helper.js");
 const fetch = require("node-fetch");
 const { stripIndents } = require("common-tags");
 const { addDays, addHours } = require("date-fns");
@@ -6,7 +7,10 @@ require("dotenv").config();
 
 const bot = new Telegraf(process.env.TOKEN);
 
-bot.start((ctx) => {
+const startMenu = async (ctx) => {
+  ctx.deleteMessage();
+  const chat = await ctx.getChat();
+
   const url = `${
     process.env.NODE_ENV === "production"
       ? "http://local.nusfitness.com:5000/"
@@ -17,7 +21,7 @@ bot.start((ctx) => {
     method: "post",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      chatId: ctx.update.message.chat.id,
+      chatId: chat.id,
     }),
     credentials: "include",
   })
@@ -37,21 +41,37 @@ bot.start((ctx) => {
         );
       }
     });
-});
+  updateMenu(ctx, "Start");
+};
 
-bot.action("Booking", (ctx) => {
+const getPreviousMenu = async (ctx, skips) => {
   ctx.deleteMessage();
+  await updateMenu(ctx, ctx.match.input);
+  return await retrieveMenu(ctx, skips);
+};
+
+bot.start((ctx) => startMenu(ctx));
+bot.action("Start", (ctx) => startMenu(ctx));
+
+bot.action("Booking", async (ctx) => {
+  const previousMenu = await getPreviousMenu(ctx, 1);
+
   ctx.reply(
     "What kind of booking function would you like to perform?",
     Markup.inlineKeyboard([
-      Markup.button.callback("View booked slots", "BookedSlots"),
-      Markup.button.callback("Make or cancel a booking", "MakeAndCancel"),
+      [
+        Markup.button.callback("View booked slots", "BookedSlots"),
+        Markup.button.callback("Make or cancel a booking", "MakeAndCancel"),
+      ],
+      [Markup.button.callback("Back", previousMenu)],
     ])
   );
 });
 
 // Retrieve the user's bookings
 bot.action("BookedSlots", async (ctx) => {
+  const previousMenu = await getPreviousMenu(ctx, 1);
+
   const url = `${
     process.env.NODE_ENV === "production"
       ? "http://local.nusfitness.com:5000/"
@@ -91,12 +111,15 @@ bot.action("BookedSlots", async (ctx) => {
       ${rows.reduce(
         (accumulator, currentValue) => accumulator + "\n" + currentValue
       )}
-    </pre>`
+    </pre>`,
+    Markup.inlineKeyboard([Markup.button.callback("Back", previousMenu)])
   );
 });
 
 // Facility selector
-bot.action("MakeAndCancel", (ctx) => {
+bot.action("MakeAndCancel", async (ctx) => {
+  const previousMenu = await getPreviousMenu(ctx, 1);
+
   ctx.reply(
     "Which facility are you interested in?",
     Markup.inlineKeyboard([
@@ -124,12 +147,15 @@ bot.action("MakeAndCancel", (ctx) => {
           "Wellness Outreach Gym"
         ),
       ],
+      [Markup.button.callback("Back", previousMenu)],
     ])
   );
 });
 
 // Date selector, format = "Kent Ridge Swimming Pool"
-bot.action(/Pool$|Gym$/, (ctx) => {
+bot.action(/Pool$|Gym$/, async (ctx) => {
+  const previousMenu = await getPreviousMenu(ctx, 1);
+
   const now = new Date();
   let dates = [];
   for (let i = 0; i < 3; i++) {
@@ -137,9 +163,10 @@ bot.action(/Pool$|Gym$/, (ctx) => {
   }
   ctx.reply(
     "Which date would you like to pick?",
-    Markup.inlineKeyboard(
-      dates.map((e) => Markup.button.callback(e, `${ctx.match.input}_${e}`))
-    )
+    Markup.inlineKeyboard([
+      dates.map((e) => Markup.button.callback(e, `${ctx.match.input}_${e}`)),
+      [Markup.button.callback("Back", previousMenu)],
+    ])
   );
 });
 
@@ -311,6 +338,8 @@ const facilities = [
 
 // Show slots for specified facility and date, format = Kent Ridge Swimming Pool_Thu Jul 08 2021
 bot.action(/^[a-zA-Z ]+_\w{3}\s\w{3}\s\d{2}\s\d{4}$/, async (ctx) => {
+  const previousMenu = await getPreviousMenu(ctx, 1);
+
   const [facilityName, date] = ctx.match.input.split("_");
   const facility = facilities.find((e) => e.name === facilityName);
   const assignedDate = new Date(date);
@@ -395,23 +424,19 @@ bot.action(/^[a-zA-Z ]+_\w{3}\s\w{3}\s\d{2}\s\d{4}$/, async (ctx) => {
       hourString,
     };
   });
-  const buttons = slots.map((e) =>
+  let buttons = slots.map((e) =>
     Markup.button.callback(e.text, `${facilityName}_${date}_${e.hourString}`)
   );
+  (buttons = buttons.reduce(function (rows, key, index) {
+    return (
+      (index % 2 == 0 ? rows.push([key]) : rows[rows.length - 1].push(key)) &&
+      rows
+    );
+  }, [])),
+    buttons.push([Markup.button.callback("Back", previousMenu)]);
 
   // Reply
-  ctx.reply(
-    "Select a slot to book or cancel",
-    Markup.inlineKeyboard(
-      buttons.reduce(function (rows, key, index) {
-        return (
-          (index % 2 == 0
-            ? rows.push([key])
-            : rows[rows.length - 1].push(key)) && rows
-        );
-      }, [])
-    )
-  );
+  ctx.reply("Select a slot to book or cancel", Markup.inlineKeyboard(buttons));
 });
 
 // Disabled slots, format = ❌
@@ -422,7 +447,9 @@ bot.action(/❌/, (ctx) => {
 });
 
 // Booking confirmation, format = Kent Ridge Swimming Pool_Thu Jul 08 2021_2000
-bot.action(/^[a-zA-Z ]+_\w{3}\s\w{3}\s\d{2}\s\d{4}_\d{4}$/, (ctx) => {
+bot.action(/^[a-zA-Z ]+_\w{3}\s\w{3}\s\d{2}\s\d{4}_\d{4}$/, async (ctx) => {
+  const previousMenu = await getPreviousMenu(ctx, 1);
+
   const [facilityName, dateString, hourString] = ctx.match[0].split("_");
   ctx.replyWithHTML(
     stripIndents`
@@ -431,7 +458,7 @@ bot.action(/^[a-zA-Z ]+_\w{3}\s\w{3}\s\d{2}\s\d{4}_\d{4}$/, (ctx) => {
     <b>Date</b>: ${dateString}\n
     <b>Time</b>: ${hourString}`,
     Markup.inlineKeyboard([
-      Markup.button.callback("Cancel", "Cancel"),
+      Markup.button.callback("Back", previousMenu),
       Markup.button.callback("Confirm booking", `${ctx.match[0]}_Book`),
     ])
   );
@@ -441,6 +468,8 @@ bot.action(/^[a-zA-Z ]+_\w{3}\s\w{3}\s\d{2}\s\d{4}_\d{4}$/, (ctx) => {
 bot.action(
   /^[a-zA-Z ]+_\w{3}\s\w{3}\s\d{2}\s\d{4}_\d{4}_Book$/,
   async (ctx) => {
+    const previousMenu = await getPreviousMenu(ctx, 2);
+
     const [facilityName, dateString, hourString] = ctx.match[0].split("_");
     const date = new Date(dateString);
     const hour = parseInt(hourString.slice(0, 2));
@@ -466,17 +495,22 @@ bot.action(
     const data = await res.json();
 
     if (data.success) {
-      ctx.reply("Your slot has been booked!");
+      ctx.reply(
+        "Your slot has been confirme!",
+        Markup.inlineKeyboard([
+          Markup.button.callback("Back to booking slots", previousMenu),
+        ])
+      );
     } else {
-      ctx.reply("Slot has been fully booked :(");
+      ctx.reply(
+        "Slot has been fully booked :(",
+        Markup.inlineKeyboard([
+          Markup.button.callback("Back to booking slots", previousMenu),
+        ])
+      );
     }
   }
 );
-
-// Cancel
-bot.action("Cancel", (ctx) => {
-  ctx.deleteMessage();
-});
 
 bot.launch();
 
