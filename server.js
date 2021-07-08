@@ -422,10 +422,16 @@ bot.action(/^[a-zA-Z ]+_\w{3}\s\w{3}\s\d{2}\s\d{4}$/, async (ctx) => {
         booked ? "✅ " : ""
       }${hourString} (${slotsLeft} slots)`,
       hourString,
+      icons: `${disabled ? "❌" : ""}${booked ? "✅" : ""}${
+        disabled || booked ? "_" : ""
+      }`,
     };
   });
   let buttons = slots.map((e) =>
-    Markup.button.callback(e.text, `${facilityName}_${date}_${e.hourString}`)
+    Markup.button.callback(
+      e.text,
+      `${e.icons}${facilityName}_${date}_${e.hourString}`
+    )
   );
   buttons = buttons.reduce(function (rows, key, index) {
     return (
@@ -433,7 +439,7 @@ bot.action(/^[a-zA-Z ]+_\w{3}\s\w{3}\s\d{2}\s\d{4}$/, async (ctx) => {
       rows
     );
   }, []);
-  buttons.push([Markup.button.callback("Refresh", ctx.match.input)]);
+  buttons.push([Markup.button.callback("🔄 Refresh", ctx.match.input)]);
   buttons.push([Markup.button.callback("Back", previousMenu)]);
 
   // Reply
@@ -497,7 +503,7 @@ bot.action(
 
     if (data.success) {
       ctx.reply(
-        "Your slot has been confirme!",
+        "Your slot has been confirmed!",
         Markup.inlineKeyboard([
           Markup.button.callback("Back to booking slots", previousMenu),
         ])
@@ -505,6 +511,77 @@ bot.action(
     } else {
       ctx.reply(
         "Slot has been fully booked :(",
+        Markup.inlineKeyboard([
+          Markup.button.callback("Back to booking slots", previousMenu),
+        ])
+      );
+    }
+  }
+);
+
+// Cancellation confirmation, format = ✅
+bot.action(/✅/, async (ctx) => {
+  const previousMenu = await getPreviousMenu(ctx, 1);
+
+  const [icon, facilityName, dateString, hourString] =
+    ctx.match.input.split("_");
+  ctx.replyWithHTML(
+    stripIndents`
+    <b>Cancel booking?</b>\n
+    <b>Facility</b>: ${facilityName}\n
+    <b>Date</b>: ${dateString}\n
+    <b>Time</b>: ${hourString}`,
+    Markup.inlineKeyboard([
+      Markup.button.callback("Back", previousMenu),
+      Markup.button.callback(
+        "Cancel booking",
+        `${facilityName}_${dateString}_${hourString}_Cancel`
+      ),
+    ])
+  );
+});
+
+// Cancel a booking, format = Kent Ridge Swimming Pool_Thu Jul 08 2021_2000_Cancel
+bot.action(
+  /^[a-zA-Z ]+_\w{3}\s\w{3}\s\d{2}\s\d{4}_\d{4}_Cancel$/,
+  async (ctx) => {
+    const previousMenu = await getPreviousMenu(ctx, 2);
+
+    const [facilityName, dateString, hourString] = ctx.match[0].split("_");
+    const date = new Date(dateString);
+    const hour = parseInt(hourString.slice(0, 2));
+    const minute = parseInt(hourString.slice(2, 4));
+    date.setHours(hour, minute, 0, 0);
+
+    const url = `${
+      process.env.NODE_ENV === "production"
+        ? "http://local.nusfitness.com:5000/"
+        : "https://salty-reaches-24995.herokuapp.com/"
+    }cancel`;
+
+    const res = await fetch(url, {
+      method: "post",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chatId: ctx.update.callback_query.from.id,
+        facility: facilityName,
+        date,
+      }),
+      credentials: "include",
+    });
+    console.log(res.status);
+    const data = await res.json();
+
+    if (data.success) {
+      ctx.reply(
+        "Your slot has been cancelled!",
+        Markup.inlineKeyboard([
+          Markup.button.callback("Back to booking slots", previousMenu),
+        ])
+      );
+    } else {
+      ctx.reply(
+        "Unable to cancel slot because it is within the 2 hour cancellation window.",
         Markup.inlineKeyboard([
           Markup.button.callback("Back to booking slots", previousMenu),
         ])
