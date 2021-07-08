@@ -415,7 +415,7 @@ bot.action(/^[a-zA-Z ]+_\w{3}\s\w{3}\s\d{2}\s\d{4}$/, async (ctx) => {
     // Determine if slot is full or slot's time has elapsed
     const slotTime = addHours(date, 1);
     const currentTime = new Date().getTime();
-    const disabled = slotsLeft <= 0 || slotTime <= currentTime;
+    const disabled = slotTime <= currentTime;
 
     return {
       text: `${disabled ? "❌ " : ""}${
@@ -442,7 +442,7 @@ bot.action(/^[a-zA-Z ]+_\w{3}\s\w{3}\s\d{2}\s\d{4}$/, async (ctx) => {
 // Disabled slots, format = ❌
 bot.action(/❌/, (ctx) => {
   return ctx.answerCbQuery(
-    "Slot cannot be booked or cancelled. It is either full or its time has elapsed"
+    "Slot cannot be booked or cancelled as its time has elapsed."
   );
 });
 
