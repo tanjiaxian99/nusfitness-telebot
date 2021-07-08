@@ -427,13 +427,14 @@ bot.action(/^[a-zA-Z ]+_\w{3}\s\w{3}\s\d{2}\s\d{4}$/, async (ctx) => {
   let buttons = slots.map((e) =>
     Markup.button.callback(e.text, `${facilityName}_${date}_${e.hourString}`)
   );
-  (buttons = buttons.reduce(function (rows, key, index) {
+  buttons = buttons.reduce(function (rows, key, index) {
     return (
       (index % 2 == 0 ? rows.push([key]) : rows[rows.length - 1].push(key)) &&
       rows
     );
-  }, [])),
-    buttons.push([Markup.button.callback("Back", previousMenu)]);
+  }, []);
+  buttons.push([Markup.button.callback("Refresh", ctx.match.input)]);
+  buttons.push([Markup.button.callback("Back", previousMenu)]);
 
   // Reply
   ctx.reply("Select a slot to book or cancel", Markup.inlineKeyboard(buttons));
