@@ -88,28 +88,39 @@ bot.action("BookedSlots", async (ctx) => {
   const data = await res.json();
   const slots = data.map((e) => ({
     facility: e.facility,
-    date: new Date(e.date),
+    date: new Date(e.date).toDateString(),
+    hour: new Date(e.date)
+      .toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      })
+      .replace(":", ""),
   }));
-  const rows = slots.map(
-    (e) =>
-      `| ${e.facility.padEnd(29)} | ${e.date.toDateString()} | ${e.date
-        .toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: false,
-        })
-        .replace(":", "")} |`
-  );
+  const dates = slots.reduce((accumulator, currentValue) => {
+    if (!accumulator[currentValue.date]) {
+      accumulator[currentValue.date] = [
+        `${currentValue.hour}: ${currentValue.facility}`,
+      ];
+    } else {
+      accumulator[currentValue.date].push(
+        `${currentValue.hour}: ${currentValue.facility}`
+      );
+    }
+    return accumulator;
+  }, {});
 
   ctx.replyWithHTML(
-    stripIndents`
-    <pre>
-      |            Facilty            |       Date      | Time |
-      |-------------------------------|-----------------|------|
-      ${rows.reduce(
-        (accumulator, currentValue) => accumulator + "\n" + currentValue
-      )}
-    </pre>`,
+    Object.keys(dates).reduce(
+      (accumulator, date) =>
+        accumulator +
+        "\n\n" +
+        stripIndents`<b>${date}</b>
+        ${dates[date].reduce((accumulator, currentValue) => {
+          return accumulator + "\n" + currentValue;
+        })}`,
+      ""
+    ),
     Markup.inlineKeyboard([Markup.button.callback("Back", previousMenu)])
   );
 });
