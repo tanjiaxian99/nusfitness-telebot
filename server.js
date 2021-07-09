@@ -59,10 +59,8 @@ bot.action("Booking", async (ctx) => {
   ctx.reply(
     "What kind of booking function would you like to perform?",
     Markup.inlineKeyboard([
-      [
-        Markup.button.callback("View booked slots", "BookedSlots"),
-        Markup.button.callback("Make or cancel a booking", "MakeAndCancel"),
-      ],
+      [Markup.button.callback("View booked slots", "BookedSlots")],
+      [Markup.button.callback("Make or cancel a booking", "MakeAndCancel")],
       [Markup.button.callback("Back", previousMenu)],
     ])
   );
@@ -128,20 +126,22 @@ bot.action("MakeAndCancel", async (ctx) => {
           "Kent Ridge Swimming Pool",
           "Kent Ridge Swimming Pool"
         ),
+      ],
+      [
         Markup.button.callback(
           "University Town Swimming Pool",
           "University Town Swimming Pool"
         ),
       ],
+      [Markup.button.callback("Kent Ridge Gym", "Kent Ridge Gym")],
       [
-        Markup.button.callback("Kent Ridge Gym", "Kent Ridge Gym"),
         Markup.button.callback(
           "University Sports Centre Gym",
           "University Sports Centre Gym"
         ),
       ],
+      [Markup.button.callback("University Town Gym", "University Town Gym")],
       [
-        Markup.button.callback("University Town Gym", "University Town Gym"),
         Markup.button.callback(
           "Wellness Outreach Gym",
           "Wellness Outreach Gym"
@@ -161,12 +161,13 @@ bot.action(/Pool$|Gym$/, async (ctx) => {
   for (let i = 0; i < 3; i++) {
     dates[i] = addDays(now, i).toDateString();
   }
+  const buttons = dates.map((e) => [
+    Markup.button.callback(e, `${ctx.match.input}_${e}`),
+  ]);
+  buttons.push([Markup.button.callback("Back", previousMenu)]);
   ctx.reply(
     "Which date would you like to pick?",
-    Markup.inlineKeyboard([
-      dates.map((e) => Markup.button.callback(e, `${ctx.match.input}_${e}`)),
-      [Markup.button.callback("Back", previousMenu)],
-    ])
+    Markup.inlineKeyboard(buttons)
   );
 });
 
@@ -569,7 +570,6 @@ bot.action(
       }),
       credentials: "include",
     });
-    console.log(res.status);
     const data = await res.json();
 
     if (data.success) {
