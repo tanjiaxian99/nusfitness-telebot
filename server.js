@@ -506,14 +506,16 @@ bot.action(
       ctx.reply(
         "Your slot has been confirmed!",
         Markup.inlineKeyboard([
-          Markup.button.callback("Back to booking slots", previousMenu),
+          [Markup.button.callback("Back to booking slots", previousMenu)],
+          [Markup.button.callback("Back to start menu", "Start")],
         ])
       );
     } else {
       ctx.reply(
         "Slot has been fully booked :(",
         Markup.inlineKeyboard([
-          Markup.button.callback("Back to booking slots", previousMenu),
+          [Markup.button.callback("Back to booking slots", previousMenu)],
+          [Markup.button.callback("Back to start menu", "Start")],
         ])
       );
     }
@@ -576,14 +578,16 @@ bot.action(
       ctx.reply(
         "Your slot has been cancelled!",
         Markup.inlineKeyboard([
-          Markup.button.callback("Back to booking slots", previousMenu),
+          [Markup.button.callback("Back to booking slots", previousMenu)],
+          [Markup.button.callback("Back to start menu", "Start")],
         ])
       );
     } else {
       ctx.reply(
         "Unable to cancel slot because it is within the 2 hour cancellation window.",
         Markup.inlineKeyboard([
-          Markup.button.callback("Back to booking slots", previousMenu),
+          [Markup.button.callback("Back to booking slots", previousMenu)],
+          [Markup.button.callback("Back to start menu", "Start")],
         ])
       );
     }
