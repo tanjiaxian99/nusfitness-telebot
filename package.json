@@ -3,6 +3,8 @@
     "dev": "nodemon server.js"
   },
   "dependencies": {
+    "common-tags": "^1.8.0",
+    "date-fns": "^2.22.1",
     "dotenv": "^10.0.0",
     "node-fetch": "^2.6.1",
     "nodemon": "^2.0.9",
