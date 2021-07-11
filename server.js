@@ -605,6 +605,49 @@ bot.action(
   }
 );
 
+// Dashboard menu
+bot.action("Dashboard", async (ctx) => {
+  const previousMenu = await getPreviousMenu(ctx, 1);
+
+  ctx.reply(
+    "What would you like to do?",
+    Markup.inlineKeyboard([
+      [Markup.button.callback("Show current traffic", "CurrentTraffic")],
+      [Markup.button.callback("Show charts", "Charts")],
+      [Markup.button.callback("Back", previousMenu)],
+    ])
+  );
+});
+
+// Current traffic
+bot.action("CurrentTraffic", async (ctx) => {
+  const previousMenu = await getPreviousMenu(ctx, 1);
+
+  const url = `${
+    process.env.NODE_ENV === "production"
+      ? "http://local.nusfitness.com:5000/"
+      : "https://salty-reaches-24995.herokuapp.com/"
+  }telegram/currentTraffic`;
+
+  const res = await fetch(url, {
+    method: "get",
+  });
+  const traffic = await res.json();
+
+  ctx.replyWithHTML(
+    stripIndents`
+    <pre>
+    Current Traffic\n
+    ${[0, 1, 2, 3, 4, 5].reduce(
+      (accumulator, i) =>
+        accumulator + `${facilities[i].name.padEnd(30)}: ${traffic[i]}\n`,
+      ""
+    )}
+    </pre>`,
+    Markup.inlineKeyboard([Markup.button.callback("Back", previousMenu)])
+  );
+});
+
 bot.launch();
 
 // Enable graceful stop
