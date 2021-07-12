@@ -614,7 +614,7 @@ bot.action("Dashboard", async (ctx) => {
     "What would you like to do?",
     Markup.inlineKeyboard([
       [Markup.button.callback("View current traffic", "CurrentTraffic")],
-      [Markup.button.callback("View chart", "Charts")],
+      [Markup.button.callback("View today's chart", "Charts")],
       [Markup.button.callback("Back", previousMenu)],
     ])
   );
@@ -649,9 +649,54 @@ bot.action("CurrentTraffic", async (ctx) => {
   );
 });
 
+// Facility selector for charts
 bot.action("Charts", async (ctx) => {
   const previousMenu = await getPreviousMenu(ctx, 1);
+
+  ctx.reply(
+    "Which facility are you interested in?",
+    Markup.inlineKeyboard([
+      [
+        Markup.button.callback(
+          "Kent Ridge Swimming Pool",
+          "Kent Ridge Swimming Pool_Chart"
+        ),
+      ],
+      [
+        Markup.button.callback(
+          "University Town Swimming Pool",
+          "University Town Swimming Pool_Chart"
+        ),
+      ],
+      [Markup.button.callback("Kent Ridge Gym", "Kent Ridge Gym_Chart")],
+      [
+        Markup.button.callback(
+          "University Sports Centre Gym",
+          "University Sports Centre Gym_Chart"
+        ),
+      ],
+      [
+        Markup.button.callback(
+          "University Town Gym",
+          "University Town Gym_Chart"
+        ),
+      ],
+      [
+        Markup.button.callback(
+          "Wellness Outreach Gym",
+          "Wellness Outreach Gym_Chart"
+        ),
+      ],
+      [Markup.button.callback("Back", previousMenu)],
+    ])
+  );
+});
+
+// View chart for a specific facility, format = University Town Gym_Chart
+bot.action(/_Chart/, async (ctx) => {
+  const previousMenu = await getPreviousMenu(ctx, 1);
   const { message_id } = await ctx.reply("Retrieving chart...");
+  const [facilityName] = ctx.match.input.split("_");
 
   // Retrieve image buffer
   let buffer;
@@ -661,7 +706,7 @@ bot.action("Charts", async (ctx) => {
     page.setViewport({ width: 1920, height: 1080 });
     await page.goto("https://jereldlimjy.github.io/nusfitness");
     await page.click(".MuiSelect-select");
-    await page.click('.MuiListItem-button[data-value="University Town Gym"]');
+    await page.click(`.MuiListItem-button[data-value="${facilityName}"]`);
     // await page.click('svg[width="900"][height="250"]');
     await page.waitForTimeout(2000);
     buffer = await page.screenshot({
@@ -673,9 +718,10 @@ bot.action("Charts", async (ctx) => {
   ctx.replyWithPhoto(
     { source: buffer },
     {
-      caption:
-        "<b>University Town Gym, Sun Jul 11 2021</b>\n\n" +
-        "To apply other filters, click <a href='https://jereldlimjy.github.io/nusfitness/#/'>here</a>",
+      caption: stripIndents`
+        <b>${facilityName}, ${new Date().toDateString()}</b>\n
+        To apply other filters, click <a href='https://jereldlimjy.github.io/nusfitness/#/'>here</a>
+        `,
       parse_mode: "HTML",
       ...Markup.inlineKeyboard([Markup.button.callback("Back", previousMenu)]),
     }
