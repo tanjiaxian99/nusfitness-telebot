@@ -3,6 +3,7 @@ const { updateMenu, retrieveMenu } = require("./helper.js");
 const fetch = require("node-fetch");
 const { stripIndents } = require("common-tags");
 const { addDays, addHours } = require("date-fns");
+const puppeteer = require("puppeteer");
 require("dotenv").config();
 
 const bot = new Telegraf(process.env.TOKEN);
@@ -604,6 +605,128 @@ bot.action(
     }
   }
 );
+
+// Dashboard menu
+bot.action("Dashboard", async (ctx) => {
+  const previousMenu = await getPreviousMenu(ctx, 1);
+
+  ctx.reply(
+    "What would you like to do?",
+    Markup.inlineKeyboard([
+      [Markup.button.callback("View current traffic", "CurrentTraffic")],
+      [Markup.button.callback("View today's chart", "Charts")],
+      [Markup.button.callback("Back", previousMenu)],
+    ])
+  );
+});
+
+// Current traffic
+bot.action("CurrentTraffic", async (ctx) => {
+  const previousMenu = await getPreviousMenu(ctx, 1);
+
+  const url = `${
+    process.env.NODE_ENV === "production"
+      ? "http://local.nusfitness.com:5000/"
+      : "https://salty-reaches-24995.herokuapp.com/"
+  }telegram/currentTraffic`;
+
+  const res = await fetch(url, {
+    method: "get",
+  });
+  const traffic = await res.json();
+
+  ctx.replyWithHTML(
+    stripIndents`
+    <pre>
+    Current Traffic\n
+    ${[0, 1, 2, 3, 4, 5].reduce(
+      (accumulator, i) =>
+        accumulator + `${facilities[i].name.padEnd(30)}: ${traffic[i]}\n`,
+      ""
+    )}
+    </pre>`,
+    Markup.inlineKeyboard([Markup.button.callback("Back", previousMenu)])
+  );
+});
+
+// Facility selector for charts
+bot.action("Charts", async (ctx) => {
+  const previousMenu = await getPreviousMenu(ctx, 1);
+
+  ctx.reply(
+    "Which facility are you interested in?",
+    Markup.inlineKeyboard([
+      [
+        Markup.button.callback(
+          "Kent Ridge Swimming Pool",
+          "Kent Ridge Swimming Pool_Chart"
+        ),
+      ],
+      [
+        Markup.button.callback(
+          "University Town Swimming Pool",
+          "University Town Swimming Pool_Chart"
+        ),
+      ],
+      [Markup.button.callback("Kent Ridge Gym", "Kent Ridge Gym_Chart")],
+      [
+        Markup.button.callback(
+          "University Sports Centre Gym",
+          "University Sports Centre Gym_Chart"
+        ),
+      ],
+      [
+        Markup.button.callback(
+          "University Town Gym",
+          "University Town Gym_Chart"
+        ),
+      ],
+      [
+        Markup.button.callback(
+          "Wellness Outreach Gym",
+          "Wellness Outreach Gym_Chart"
+        ),
+      ],
+      [Markup.button.callback("Back", previousMenu)],
+    ])
+  );
+});
+
+// View chart for a specific facility, format = University Town Gym_Chart
+bot.action(/_Chart/, async (ctx) => {
+  const previousMenu = await getPreviousMenu(ctx, 1);
+  const { message_id } = await ctx.reply("Retrieving chart...");
+  const [facilityName] = ctx.match.input.split("_");
+
+  // Retrieve image buffer
+  let buffer;
+  await (async () => {
+    const browser = await puppeteer.launch({ headless: true });
+    const page = await browser.newPage();
+    page.setViewport({ width: 1920, height: 1080 });
+    await page.goto("https://jereldlimjy.github.io/nusfitness");
+    await page.click(".MuiSelect-select");
+    await page.click(`.MuiListItem-button[data-value="${facilityName}"]`);
+    // await page.click('svg[width="900"][height="250"]');
+    await page.waitForTimeout(2000);
+    buffer = await page.screenshot({
+      clip: { x: 20, y: 250, width: 1520, height: 600 },
+    });
+  })();
+  ctx.deleteMessage(message_id);
+
+  ctx.replyWithPhoto(
+    { source: buffer },
+    {
+      caption: stripIndents`
+        <b>${facilityName}, ${new Date().toDateString()}</b>\n
+        To apply other filters, click <a href='https://jereldlimjy.github.io/nusfitness/#/'>here</a>
+        `,
+      parse_mode: "HTML",
+      ...Markup.inlineKeyboard([Markup.button.callback("Back", previousMenu)]),
+    }
+  );
+});
 
 bot.launch();
 
