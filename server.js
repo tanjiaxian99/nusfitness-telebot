@@ -3,6 +3,7 @@ const { updateMenu, retrieveMenu } = require("./helper.js");
 const fetch = require("node-fetch");
 const { stripIndents } = require("common-tags");
 const { addDays, addHours } = require("date-fns");
+const puppeteer = require("puppeteer");
 require("dotenv").config();
 
 const bot = new Telegraf(process.env.TOKEN);
@@ -612,8 +613,8 @@ bot.action("Dashboard", async (ctx) => {
   ctx.reply(
     "What would you like to do?",
     Markup.inlineKeyboard([
-      [Markup.button.callback("Show current traffic", "CurrentTraffic")],
-      [Markup.button.callback("Show charts", "Charts")],
+      [Markup.button.callback("View current traffic", "CurrentTraffic")],
+      [Markup.button.callback("View chart", "Charts")],
       [Markup.button.callback("Back", previousMenu)],
     ])
   );
@@ -645,6 +646,39 @@ bot.action("CurrentTraffic", async (ctx) => {
     )}
     </pre>`,
     Markup.inlineKeyboard([Markup.button.callback("Back", previousMenu)])
+  );
+});
+
+bot.action("Charts", async (ctx) => {
+  const previousMenu = await getPreviousMenu(ctx, 1);
+  const { message_id } = await ctx.reply("Retrieving chart...");
+
+  // Retrieve image buffer
+  let buffer;
+  await (async () => {
+    const browser = await puppeteer.launch({ headless: true });
+    const page = await browser.newPage();
+    page.setViewport({ width: 1920, height: 1080 });
+    await page.goto("https://jereldlimjy.github.io/nusfitness");
+    await page.click(".MuiSelect-select");
+    await page.click('.MuiListItem-button[data-value="University Town Gym"]');
+    // await page.click('svg[width="900"][height="250"]');
+    await page.waitForTimeout(2000);
+    buffer = await page.screenshot({
+      clip: { x: 20, y: 250, width: 1520, height: 600 },
+    });
+  })();
+  ctx.deleteMessage(message_id);
+
+  ctx.replyWithPhoto(
+    { source: buffer },
+    {
+      caption:
+        "<b>University Town Gym, Sun Jul 11 2021</b>\n\n" +
+        "To apply other filters, click <a href='https://jereldlimjy.github.io/nusfitness/#/'>here</a>",
+      parse_mode: "HTML",
+      ...Markup.inlineKeyboard([Markup.button.callback("Back", previousMenu)]),
+    }
   );
 });
 
