@@ -36,8 +36,8 @@ const startMenu = async (ctx) => {
       ])
     );
   } else {
-    ctx.reply(
-      "You are currently not logged in to @NUSFitness_Bot. Please login using the NUSFitness website."
+    ctx.replyWithHTML(
+      "You are currently not logged in to @NUSFitness_Bot. Please login through the <a href='https://jereldlimjy.github.io/nusfitness/#/'>NUSFitness website</a>"
     );
   }
   updateMenu(ctx, "Start");
