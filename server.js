@@ -2,6 +2,7 @@ const { Telegraf, Markup } = require("telegraf");
 const { updateMenu, retrieveMenu } = require("./helper.js");
 const fetch = require("node-fetch");
 const { stripIndents } = require("common-tags");
+const { oneLine } = require("common-tags");
 const { addDays, addHours } = require("date-fns");
 const puppeteer = require("puppeteer");
 require("dotenv").config();
@@ -49,7 +50,35 @@ const getPreviousMenu = async (ctx, skips) => {
   return await retrieveMenu(ctx, skips);
 };
 
+// Global commands
 bot.start((ctx) => startMenu(ctx));
+
+bot.help((ctx) => {
+  ctx.replyWithHTML(
+    oneLine`
+    This bot aims to deliver as many functionalities as possible that can be found on the
+    <a href="https://jereldlimjy.github.io/nusfitness/#/">NUSFitness website</a>. The bot
+    currently implements booking and cancellation, as well as view booked slots. You may also
+    view the current traffic, along with the traffic chart for the day.` +
+      "\n\n" +
+      oneLine`
+    Do head to the website to link your web account with Telegram. After that, send /start
+    to begin your @NUSFitness_Bot journey! If you would like to report a bug, do file an issue
+    at Github. The link can be found in the /about section.
+    `
+  );
+});
+
+bot.command("about", (ctx) => {
+  ctx.replyWithHTML(
+    stripIndents`
+    Do submit inquiries or bug report to <a href="https://github.com/tanjiaxian99/nusfitness-telebot/issues">Github</a>
+    This bot is developed by @ilovecheezles and @jereldlimjy
+    `
+  );
+});
+
+// Callbacks
 bot.action("Start", (ctx) => startMenu(ctx));
 
 bot.action("Booking", async (ctx) => {
