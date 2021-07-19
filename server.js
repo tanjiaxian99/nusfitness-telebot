@@ -367,7 +367,6 @@ bot.action(/^[a-zA-Z ]+_\w{3}\s\w{3}\s\d{2}\s\d{4}$/, async (ctx) => {
     body: JSON.stringify({
       facility: facilityName,
       startDate: assignedDate,
-      endDate: addDays(assignedDate, 1),
     }),
     credentials: "include",
   });
