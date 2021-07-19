@@ -18,30 +18,28 @@ const startMenu = async (ctx) => {
       : "https://salty-reaches-24995.herokuapp.com/"
   }telegram/isLoggedIn`;
 
-  fetch(url, {
+  const res = await fetch(url, {
     method: "post",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       chatId: chat.id,
     }),
     credentials: "include",
-  })
-    .then((res) => res.json())
-    .then((res) => {
-      if (res.success) {
-        ctx.reply(
-          "What would you like to do today?",
-          Markup.inlineKeyboard([
-            Markup.button.callback("Booking", "Booking"),
-            Markup.button.callback("Dashboard", "Dashboard"),
-          ])
-        );
-      } else {
-        ctx.reply(
-          "You are currently not logged in to @NUSFitness_Bot. Please login using the NUSFitness website."
-        );
-      }
-    });
+  });
+  const data = await res.json();
+  if (data.success) {
+    ctx.reply(
+      "What would you like to do today?",
+      Markup.inlineKeyboard([
+        Markup.button.callback("Booking", "Booking"),
+        Markup.button.callback("Dashboard", "Dashboard"),
+      ])
+    );
+  } else {
+    ctx.reply(
+      "You are currently not logged in to @NUSFitness_Bot. Please login using the NUSFitness website."
+    );
+  }
   updateMenu(ctx, "Start");
 };
 
@@ -727,6 +725,9 @@ bot.action(/_Chart/, async (ctx) => {
     }
   );
 });
+
+// Error handling
+bot.catch((err) => console.log(err));
 
 bot.launch();
 

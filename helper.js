@@ -2,15 +2,15 @@ const fetch = require("node-fetch");
 require("dotenv").config();
 
 const updateMenu = async (ctx, currentMenu) => {
-  const chat = await ctx.getChat();
-
-  const url = `${
-    process.env.NODE_ENV === "production"
-      ? "http://local.nusfitness.com:5000/"
-      : "https://salty-reaches-24995.herokuapp.com/"
-  }telegram/updateMenus`;
-
   try {
+    const chat = await ctx.getChat();
+
+    const url = `${
+      process.env.NODE_ENV === "production"
+        ? "http://local.nusfitness.com:5000/"
+        : "https://salty-reaches-24995.herokuapp.com/"
+    }telegram/updateMenus`;
+
     const res = await fetch(url, {
       method: "post",
       headers: { "Content-Type": "application/json" },
@@ -20,21 +20,21 @@ const updateMenu = async (ctx, currentMenu) => {
       }),
       credentials: "include",
     });
-  } catch (e) {
-    console.log(e);
+  } catch (err) {
+    console.log(err);
   }
 };
 
 const retrieveMenu = async (ctx, skips) => {
-  const chat = await ctx.getChat();
-
-  const url = `${
-    process.env.NODE_ENV === "production"
-      ? "http://local.nusfitness.com:5000/"
-      : "https://salty-reaches-24995.herokuapp.com/"
-  }telegram/getPreviousMenu`;
-
   try {
+    const chat = await ctx.getChat();
+
+    const url = `${
+      process.env.NODE_ENV === "production"
+        ? "http://local.nusfitness.com:5000/"
+        : "https://salty-reaches-24995.herokuapp.com/"
+    }telegram/getPreviousMenu`;
+
     const res = await fetch(url, {
       method: "post",
       headers: { "Content-Type": "application/json" },
@@ -46,8 +46,8 @@ const retrieveMenu = async (ctx, skips) => {
     });
     const data = await res.json();
     return data.previousMenu;
-  } catch (e) {
-    console.log(e);
+  } catch (err) {
+    console.log(err);
   }
 };
 
