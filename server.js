@@ -542,13 +542,42 @@ bot.action(
     const minute = parseInt(hourString.slice(2, 4));
     date.setHours(hour, minute, 0, 0);
 
-    const url = `${
+    // Update credits
+    let url = `${
+      process.env.NODE_ENV === "production"
+        ? "http://local.nusfitness.com:5000/"
+        : "https://salty-reaches-24995.herokuapp.com/"
+    }updateCredits`;
+
+    let res = await fetch(url, {
+      method: "post",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chatId: ctx.update.callback_query.from.id,
+      }),
+      credentials: "include",
+    });
+    let data = await res.json();
+
+    if (!data.success) {
+      ctx.reply(
+        "You do not have any credits left!",
+        Markup.inlineKeyboard([
+          [Markup.button.callback("Back to booking slots", previousMenu)],
+          [Markup.button.callback("Back to start menu", "Start")],
+        ])
+      );
+      return;
+    }
+
+    // Book the slot
+    url = `${
       process.env.NODE_ENV === "production"
         ? "http://local.nusfitness.com:5000/"
         : "https://salty-reaches-24995.herokuapp.com/"
     }book`;
 
-    const res = await fetch(url, {
+    res = await fetch(url, {
       method: "post",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -558,7 +587,7 @@ bot.action(
       }),
       credentials: "include",
     });
-    const data = await res.json();
+    data = await res.json();
 
     if (data.success) {
       ctx.reply(
