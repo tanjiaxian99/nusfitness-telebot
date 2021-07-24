@@ -384,13 +384,30 @@ bot.action(/^[a-zA-Z ]+_\w{3}\s\w{3}\s\d{2}\s\d{4}$/, async (ctx) => {
   const facility = facilities.find((e) => e.name === facilityName);
   const assignedDate = new Date(date);
 
-  // Get slot count
+  // Get credits count
   let url = `${
     process.env.NODE_ENV === "production"
       ? "http://local.nusfitness.com:5000/"
       : "https://salty-reaches-24995.herokuapp.com/"
-  }slots`;
+  }creditsLeft`;
   let res = await fetch(url, {
+    method: "post",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      chatId: ctx.update.callback_query.from.id,
+    }),
+    credentials: "include",
+  });
+  data = await res.json();
+  const credits = data.credits;
+
+  // Get slot count
+  url = `${
+    process.env.NODE_ENV === "production"
+      ? "http://local.nusfitness.com:5000/"
+      : "https://salty-reaches-24995.herokuapp.com/"
+  }slots`;
+  res = await fetch(url, {
     method: "post",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -399,7 +416,7 @@ bot.action(/^[a-zA-Z ]+_\w{3}\s\w{3}\s\d{2}\s\d{4}$/, async (ctx) => {
     }),
     credentials: "include",
   });
-  let data = await res.json();
+  data = await res.json();
   const slotCount = data.map((e) => ({
     date: new Date(e._id),
     count: e.count,
@@ -482,7 +499,10 @@ bot.action(/^[a-zA-Z ]+_\w{3}\s\w{3}\s\d{2}\s\d{4}$/, async (ctx) => {
   buttons.push([Markup.button.callback("Back", previousMenu)]);
 
   // Reply
-  ctx.reply("Select a slot to book or cancel", Markup.inlineKeyboard(buttons));
+  ctx.replyWithHTML(
+    `Select a slot to book or cancel\n\nNumber of credits left: <b>${credits}</b>`,
+    Markup.inlineKeyboard(buttons)
+  );
 });
 
 // Disabled slots, format = ❌
