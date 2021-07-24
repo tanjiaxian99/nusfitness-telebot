@@ -10,7 +10,6 @@ require("dotenv").config();
 const bot = new Telegraf(process.env.TOKEN);
 
 const startMenu = async (ctx) => {
-  ctx.deleteMessage();
   const chat = await ctx.getChat();
 
   const url = `${
@@ -45,9 +44,13 @@ const startMenu = async (ctx) => {
 };
 
 const getPreviousMenu = async (ctx, skips) => {
-  ctx.deleteMessage();
-  await updateMenu(ctx, ctx.match.input);
-  return await retrieveMenu(ctx, skips);
+  try {
+    ctx.deleteMessage();
+    await updateMenu(ctx, ctx.match.input);
+    return await retrieveMenu(ctx, skips);
+  } catch (err) {
+    console.log(err);
+  }
 };
 
 // Global commands
