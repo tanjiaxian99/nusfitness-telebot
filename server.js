@@ -5,6 +5,7 @@ const { stripIndents } = require("common-tags");
 const { oneLine } = require("common-tags");
 const { addDays, addHours } = require("date-fns");
 const puppeteer = require("puppeteer");
+const wakeUpDyno = require("./wokeDyno.js");
 require("dotenv").config();
 
 const bot = new Telegraf(process.env.TOKEN);
