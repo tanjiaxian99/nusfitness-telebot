@@ -8,6 +8,10 @@ const puppeteer = require("puppeteer");
 const wakeUpDyno = require("./wokeDyno.js");
 require("dotenv").config();
 
+const API_TOKEN = process.env.TOKEN || "";
+const PORT = process.env.PORT || 4000;
+const URL = process.env.URL || "https://salty-castle-78284.herokuapp.com/";
+
 const bot = new Telegraf(process.env.TOKEN);
 
 const startMenu = async (ctx) => {
@@ -813,7 +817,8 @@ bot.action(/_Chart/, async (ctx) => {
 // Error handling
 bot.catch((err) => console.log(err));
 
-bot.launch();
+bot.telegram.setWebhook(`${URL}/bot${API_TOKEN}`);
+bot.startWebhook(`/bot${API_TOKEN}`, null, PORT);
 
 // Enable graceful stop
 process.once("SIGINT", () => bot.stop("SIGINT"));
