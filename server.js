@@ -1,5 +1,7 @@
 const { Telegraf, Markup } = require("telegraf");
 const { updateMenu, retrieveMenu } = require("./helper.js");
+const express = require("express");
+const app = express();
 const fetch = require("node-fetch");
 const { stripIndents } = require("common-tags");
 const { oneLine } = require("common-tags");
@@ -8,11 +10,18 @@ const puppeteer = require("puppeteer");
 const wakeUpDyno = require("./wokeDyno.js");
 require("dotenv").config();
 
-const API_TOKEN = process.env.TOKEN || "";
 const PORT = process.env.PORT || 4000;
-const URL = process.env.URL || "https://salty-castle-78284.herokuapp.com/";
+
+// Connect express to keep port open
+app.get("/", (req, res) => {
+  res.send("Hello World!");
+});
+app.listen(PORT, () => {
+  console.log(`Listening on port ${PORT}`);
+});
 
 const bot = new Telegraf(process.env.TOKEN);
+bot.telegram.deleteWebhook();
 
 const startMenu = async (ctx) => {
   const chat = await ctx.getChat();
@@ -816,9 +825,7 @@ bot.action(/_Chart/, async (ctx) => {
 
 // Error handling
 bot.catch((err) => console.log(err));
-
-bot.telegram.setWebhook(`${URL}/bot${API_TOKEN}`);
-bot.startWebhook(`/bot${API_TOKEN}`, null, PORT);
+bot.startPolling();
 
 // Enable graceful stop
 process.once("SIGINT", () => bot.stop("SIGINT"));
