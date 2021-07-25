@@ -457,7 +457,7 @@ bot.action(/^[a-zA-Z ]+_\w{3}\s\w{3}\s\d{2}\s\d{4}$/, async (ctx) => {
 
     date.setHours(hour, minute, 0, 0);
 
-    const maxCap = 20; // adjust depending on facility
+    const maxCap = 40; // adjust depending on facility
     let slotsLeft = maxCap;
 
     // Retrieve number of slots left
