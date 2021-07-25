@@ -6,7 +6,7 @@ const updateMenu = async (ctx, currentMenu) => {
     const chat = await ctx.getChat();
 
     const url = `${
-      process.env.NODE_ENV === "production"
+      process.env.NODE_ENV === "development"
         ? "http://local.nusfitness.com:5000/"
         : "https://salty-reaches-24995.herokuapp.com/"
     }telegram/updateMenus`;
@@ -30,7 +30,7 @@ const retrieveMenu = async (ctx, skips) => {
     const chat = await ctx.getChat();
 
     const url = `${
-      process.env.NODE_ENV === "production"
+      process.env.NODE_ENV === "development"
         ? "http://local.nusfitness.com:5000/"
         : "https://salty-reaches-24995.herokuapp.com/"
     }telegram/getPreviousMenu`;

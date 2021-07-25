@@ -13,7 +13,7 @@ const startMenu = async (ctx) => {
   const chat = await ctx.getChat();
 
   const url = `${
-    process.env.NODE_ENV === "production"
+    process.env.NODE_ENV === "development"
       ? "http://local.nusfitness.com:5000/"
       : "https://salty-reaches-24995.herokuapp.com/"
   }telegram/isLoggedIn`;
@@ -102,7 +102,7 @@ bot.action("BookedSlots", async (ctx) => {
   const previousMenu = await getPreviousMenu(ctx, 1);
 
   const url = `${
-    process.env.NODE_ENV === "production"
+    process.env.NODE_ENV === "development"
       ? "http://local.nusfitness.com:5000/"
       : "https://salty-reaches-24995.herokuapp.com/"
   }bookedSlots`;
@@ -389,7 +389,7 @@ bot.action(/^[a-zA-Z ]+_\w{3}\s\w{3}\s\d{2}\s\d{4}$/, async (ctx) => {
 
   // Get credits count
   let url = `${
-    process.env.NODE_ENV === "production"
+    process.env.NODE_ENV === "development"
       ? "http://local.nusfitness.com:5000/"
       : "https://salty-reaches-24995.herokuapp.com/"
   }creditsLeft`;
@@ -406,7 +406,7 @@ bot.action(/^[a-zA-Z ]+_\w{3}\s\w{3}\s\d{2}\s\d{4}$/, async (ctx) => {
 
   // Get slot count
   url = `${
-    process.env.NODE_ENV === "production"
+    process.env.NODE_ENV === "development"
       ? "http://local.nusfitness.com:5000/"
       : "https://salty-reaches-24995.herokuapp.com/"
   }slots`;
@@ -427,7 +427,7 @@ bot.action(/^[a-zA-Z ]+_\w{3}\s\w{3}\s\d{2}\s\d{4}$/, async (ctx) => {
 
   // Get booked slots
   url = `${
-    process.env.NODE_ENV === "production"
+    process.env.NODE_ENV === "development"
       ? "http://local.nusfitness.com:5000/"
       : "https://salty-reaches-24995.herokuapp.com/"
   }bookedSlots`;
@@ -547,7 +547,7 @@ bot.action(
 
     // Update credits
     let url = `${
-      process.env.NODE_ENV === "production"
+      process.env.NODE_ENV === "development"
         ? "http://local.nusfitness.com:5000/"
         : "https://salty-reaches-24995.herokuapp.com/"
     }updateCredits`;
@@ -575,7 +575,7 @@ bot.action(
 
     // Book the slot
     url = `${
-      process.env.NODE_ENV === "production"
+      process.env.NODE_ENV === "development"
         ? "http://local.nusfitness.com:5000/"
         : "https://salty-reaches-24995.herokuapp.com/"
     }book`;
@@ -647,7 +647,7 @@ bot.action(
     date.setHours(hour, minute, 0, 0);
 
     const url = `${
-      process.env.NODE_ENV === "production"
+      process.env.NODE_ENV === "development"
         ? "http://local.nusfitness.com:5000/"
         : "https://salty-reaches-24995.herokuapp.com/"
     }cancel`;
@@ -703,7 +703,7 @@ bot.action("CurrentTraffic", async (ctx) => {
   const previousMenu = await getPreviousMenu(ctx, 1);
 
   const url = `${
-    process.env.NODE_ENV === "production"
+    process.env.NODE_ENV === "development"
       ? "http://local.nusfitness.com:5000/"
       : "https://salty-reaches-24995.herokuapp.com/"
   }telegram/currentTraffic`;
