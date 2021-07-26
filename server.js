@@ -18,6 +18,7 @@ app.get("/", (req, res) => {
 });
 app.listen(PORT, () => {
   console.log(`Listening on port ${PORT}`);
+  wakeUpDyno("https://salty-castle-78284.herokuapp.com/");
 });
 
 const bot = new Telegraf(process.env.TOKEN);
