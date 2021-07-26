@@ -80,9 +80,17 @@ bot.help((ctx) => {
     view the current traffic, along with the traffic chart for the day.` +
       "\n\n" +
       oneLine`
-    Do head to the website to link your web account with Telegram. After that, send /start
-    to begin your @NUSFitness_Bot journey! If you would like to report a bug, do file an issue
-    at Github. The link can be found in the /about section.
+    Do head to the website to link your web account with Telegram. This can be done by logging in
+    with a registered account, heading to the Profile section, and clicking on the "Log in with
+    Telegram" button. Thereafter, enter your mobile number and accept the session on the Telegram
+    app to login to Telegram on your browser. Lastly, select "Yes" on the next pop-up (or if it
+    doesn't appear, click on the "Log in with Telegram" button once more) and accept the connection
+    on the Telegram app to log in to @NUSFitness_Bot.` +
+      "\n\n" +
+      oneLine`
+      Once you have successfully logged in, send /start to begin your @NUSFitness_Bot journey! If
+      you would like to report a bug, do file an issue at Github. The link can be found in the
+      /about section.
     `
   );
 });
