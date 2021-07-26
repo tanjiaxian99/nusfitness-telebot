@@ -52,7 +52,10 @@ const startMenu = async (ctx) => {
     );
   } else {
     ctx.replyWithHTML(
-      "You are currently not logged in to @NUSFitness_Bot. Please login through the <a href='https://jereldlimjy.github.io/nusfitness/#/'>NUSFitness website</a>"
+      oneLine`
+      You are currently not logged in to @NUSFitness_Bot. Please login through the 
+      <a href='https://jereldlimjy.github.io/nusfitness/#/'>NUSFitness website</a>
+      and click on the "Log in with Telegram" button. For more information, send /help`
     );
   }
   updateMenu(ctx, "Start");
