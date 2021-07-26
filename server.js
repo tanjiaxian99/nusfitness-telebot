@@ -25,40 +25,46 @@ const bot = new Telegraf(process.env.TOKEN);
 bot.telegram.deleteWebhook();
 
 const startMenu = async (ctx) => {
-  const chat = await ctx.getChat();
+  try {
+    ctx.deleteMessage();
+    const chat = await ctx.getChat();
 
-  const url = `${
-    process.env.NODE_ENV === "development"
-      ? "http://local.nusfitness.com:5000/"
-      : "https://salty-reaches-24995.herokuapp.com/"
-  }telegram/isLoggedIn`;
+    const url = `${
+      process.env.NODE_ENV === "development"
+        ? "http://local.nusfitness.com:5000/"
+        : "https://salty-reaches-24995.herokuapp.com/"
+    }telegram/isLoggedIn`;
 
-  const res = await fetch(url, {
-    method: "post",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      chatId: chat.id,
-    }),
-    credentials: "include",
-  });
-  const data = await res.json();
-  if (data.success) {
-    ctx.reply(
-      "What would you like to do today?",
-      Markup.inlineKeyboard([
-        Markup.button.callback("Booking", "Booking"),
-        Markup.button.callback("Dashboard", "Dashboard"),
-      ])
-    );
-  } else {
-    ctx.replyWithHTML(
-      oneLine`
-      You are currently not logged in to @NUSFitness_Bot. Please login through the 
-      <a href='https://jereldlimjy.github.io/nusfitness/#/'>NUSFitness website</a>
-      and click on the "Log in with Telegram" button. For more information, send /help`
-    );
+    const res = await fetch(url, {
+      method: "post",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chatId: chat.id,
+      }),
+      credentials: "include",
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      ctx.reply(
+        "What would you like to do today?",
+        Markup.inlineKeyboard([
+          Markup.button.callback("Booking", "Booking"),
+          Markup.button.callback("Dashboard", "Dashboard"),
+        ])
+      );
+    } else {
+      ctx.replyWithHTML(
+        oneLine`
+        You are currently not logged in to @NUSFitness_Bot. Please login through the 
+        <a href='https://jereldlimjy.github.io/nusfitness/#/'>NUSFitness website</a>
+        and click on the "Log in with Telegram" button. For more information, send /help`
+      );
+    }
+    updateMenu(ctx, "Start");
+  } catch (err) {
+    console.log(err);
   }
-  updateMenu(ctx, "Start");
 };
 
 const getPreviousMenu = async (ctx, skips) => {
@@ -72,7 +78,7 @@ const getPreviousMenu = async (ctx, skips) => {
 };
 
 // Global commands
-bot.start((ctx) => startMenu(ctx));
+bot.start(async (ctx) => await startMenu(ctx));
 
 bot.help((ctx) => {
   ctx.replyWithHTML(
@@ -108,7 +114,7 @@ bot.command("about", (ctx) => {
 });
 
 // Callbacks
-bot.action("Start", (ctx) => startMenu(ctx));
+bot.action("Start", async (ctx) => await startMenu(ctx));
 
 bot.action("Booking", async (ctx) => {
   const previousMenu = await getPreviousMenu(ctx, 1);
@@ -143,6 +149,13 @@ bot.action("BookedSlots", async (ctx) => {
   });
 
   const data = await res.json();
+  if (data.length === 0) {
+    ctx.reply(
+      "No bookings found.",
+      Markup.inlineKeyboard([Markup.button.callback("Back", previousMenu)])
+    );
+  }
+
   const slots = data.map((e) => ({
     facility: e.facility,
     date: new Date(e.date).toDateString(),
@@ -727,6 +740,7 @@ bot.action("Dashboard", async (ctx) => {
 // Current traffic
 bot.action("CurrentTraffic", async (ctx) => {
   const previousMenu = await getPreviousMenu(ctx, 1);
+  const { message_id } = await ctx.reply("Retrieving traffic...");
 
   const url = `${
     process.env.NODE_ENV === "development"
@@ -739,6 +753,7 @@ bot.action("CurrentTraffic", async (ctx) => {
   });
   const traffic = await res.json();
 
+  ctx.deleteMessage(message_id);
   ctx.replyWithHTML(
     stripIndents`
     <pre>
