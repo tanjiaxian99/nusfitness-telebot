@@ -808,7 +808,7 @@ bot.action(/_Chart/, async (ctx) => {
   // Retrieve image buffer
   let buffer;
   await (async () => {
-    const browser = await puppeteer.launch({ headless: true });
+    const browser = await puppeteer.launch({ args: ["--no-sanbox"] });
     const page = await browser.newPage();
     page.setViewport({ width: 1920, height: 1080 });
     await page.goto("https://jereldlimjy.github.io/nusfitness");
@@ -817,7 +817,7 @@ bot.action(/_Chart/, async (ctx) => {
     // await page.click('svg[width="900"][height="250"]');
     await page.waitForTimeout(2000);
     buffer = await page.screenshot({
-      clip: { x: 20, y: 250, width: 1520, height: 600 },
+      clip: { x: 380, y: 210, width: 1520, height: 640 },
     });
   })();
   ctx.deleteMessage(message_id);
