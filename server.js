@@ -1,46 +1,70 @@
 const { Telegraf, Markup } = require("telegraf");
 const { updateMenu, retrieveMenu } = require("./helper.js");
+const express = require("express");
+const app = express();
 const fetch = require("node-fetch");
 const { stripIndents } = require("common-tags");
 const { oneLine } = require("common-tags");
 const { addDays, addHours } = require("date-fns");
 const puppeteer = require("puppeteer");
+const wakeUpDyno = require("./wokeDyno.js");
 require("dotenv").config();
 
+const PORT = process.env.PORT || 4000;
+
+// Connect express to keep port open
+app.get("/", (req, res) => {
+  res.send("Hello World!");
+});
+app.listen(PORT, () => {
+  console.log(`Listening on port ${PORT}`);
+  wakeUpDyno("https://salty-castle-78284.herokuapp.com/");
+});
+
 const bot = new Telegraf(process.env.TOKEN);
+bot.telegram.deleteWebhook();
 
 const startMenu = async (ctx) => {
-  const chat = await ctx.getChat();
+  try {
+    ctx.deleteMessage();
+    const chat = await ctx.getChat();
 
-  const url = `${
-    process.env.NODE_ENV === "production"
-      ? "http://local.nusfitness.com:5000/"
-      : "https://salty-reaches-24995.herokuapp.com/"
-  }telegram/isLoggedIn`;
+    const url = `${
+      process.env.NODE_ENV === "development"
+        ? "http://local.nusfitness.com:5000/"
+        : "https://salty-reaches-24995.herokuapp.com/"
+    }telegram/isLoggedIn`;
 
-  const res = await fetch(url, {
-    method: "post",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      chatId: chat.id,
-    }),
-    credentials: "include",
-  });
-  const data = await res.json();
-  if (data.success) {
-    ctx.reply(
-      "What would you like to do today?",
-      Markup.inlineKeyboard([
-        Markup.button.callback("Booking", "Booking"),
-        Markup.button.callback("Dashboard", "Dashboard"),
-      ])
-    );
-  } else {
-    ctx.replyWithHTML(
-      "You are currently not logged in to @NUSFitness_Bot. Please login through the <a href='https://jereldlimjy.github.io/nusfitness/#/'>NUSFitness website</a>"
-    );
+    const res = await fetch(url, {
+      method: "post",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chatId: chat.id,
+      }),
+      credentials: "include",
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      ctx.reply(
+        "What would you like to do today?",
+        Markup.inlineKeyboard([
+          Markup.button.callback("Booking", "Booking"),
+          Markup.button.callback("Dashboard", "Dashboard"),
+        ])
+      );
+    } else {
+      ctx.replyWithHTML(
+        oneLine`
+        You are currently not logged in to @NUSFitness_Bot. Please login through the 
+        <a href='https://jereldlimjy.github.io/nusfitness/#/'>NUSFitness website</a>
+        and click on the "Log in with Telegram" button. For more information, send /help`
+      );
+    }
+    updateMenu(ctx, "Start");
+  } catch (err) {
+    console.log(err);
   }
-  updateMenu(ctx, "Start");
 };
 
 const getPreviousMenu = async (ctx, skips) => {
@@ -54,7 +78,7 @@ const getPreviousMenu = async (ctx, skips) => {
 };
 
 // Global commands
-bot.start((ctx) => startMenu(ctx));
+bot.start(async (ctx) => await startMenu(ctx));
 
 bot.help((ctx) => {
   ctx.replyWithHTML(
@@ -65,9 +89,17 @@ bot.help((ctx) => {
     view the current traffic, along with the traffic chart for the day.` +
       "\n\n" +
       oneLine`
-    Do head to the website to link your web account with Telegram. After that, send /start
-    to begin your @NUSFitness_Bot journey! If you would like to report a bug, do file an issue
-    at Github. The link can be found in the /about section.
+    Do head to the website to link your web account with Telegram. This can be done by logging in
+    with a registered account, heading to the Profile section, and clicking on the "Log in with
+    Telegram" button. Thereafter, enter your mobile number and accept the session on the Telegram
+    app to login to Telegram on your browser. Lastly, select "Yes" on the next pop-up (or if it
+    doesn't appear, click on the "Log in with Telegram" button once more) and accept the connection
+    on the Telegram app to log in to @NUSFitness_Bot.` +
+      "\n\n" +
+      oneLine`
+      Once you have successfully logged in, send /start to begin your @NUSFitness_Bot journey! If
+      you would like to report a bug, do file an issue at Github. The link can be found in the
+      /about section.
     `
   );
 });
@@ -82,7 +114,7 @@ bot.command("about", (ctx) => {
 });
 
 // Callbacks
-bot.action("Start", (ctx) => startMenu(ctx));
+bot.action("Start", async (ctx) => await startMenu(ctx));
 
 bot.action("Booking", async (ctx) => {
   const previousMenu = await getPreviousMenu(ctx, 1);
@@ -102,7 +134,7 @@ bot.action("BookedSlots", async (ctx) => {
   const previousMenu = await getPreviousMenu(ctx, 1);
 
   const url = `${
-    process.env.NODE_ENV === "production"
+    process.env.NODE_ENV === "development"
       ? "http://local.nusfitness.com:5000/"
       : "https://salty-reaches-24995.herokuapp.com/"
   }bookedSlots`;
@@ -117,6 +149,13 @@ bot.action("BookedSlots", async (ctx) => {
   });
 
   const data = await res.json();
+  if (data.length === 0) {
+    ctx.reply(
+      "No bookings found.",
+      Markup.inlineKeyboard([Markup.button.callback("Back", previousMenu)])
+    );
+  }
+
   const slots = data.map((e) => ({
     facility: e.facility,
     date: new Date(e.date).toDateString(),
@@ -389,7 +428,7 @@ bot.action(/^[a-zA-Z ]+_\w{3}\s\w{3}\s\d{2}\s\d{4}$/, async (ctx) => {
 
   // Get credits count
   let url = `${
-    process.env.NODE_ENV === "production"
+    process.env.NODE_ENV === "development"
       ? "http://local.nusfitness.com:5000/"
       : "https://salty-reaches-24995.herokuapp.com/"
   }creditsLeft`;
@@ -406,7 +445,7 @@ bot.action(/^[a-zA-Z ]+_\w{3}\s\w{3}\s\d{2}\s\d{4}$/, async (ctx) => {
 
   // Get slot count
   url = `${
-    process.env.NODE_ENV === "production"
+    process.env.NODE_ENV === "development"
       ? "http://local.nusfitness.com:5000/"
       : "https://salty-reaches-24995.herokuapp.com/"
   }slots`;
@@ -427,7 +466,7 @@ bot.action(/^[a-zA-Z ]+_\w{3}\s\w{3}\s\d{2}\s\d{4}$/, async (ctx) => {
 
   // Get booked slots
   url = `${
-    process.env.NODE_ENV === "production"
+    process.env.NODE_ENV === "development"
       ? "http://local.nusfitness.com:5000/"
       : "https://salty-reaches-24995.herokuapp.com/"
   }bookedSlots`;
@@ -547,7 +586,7 @@ bot.action(
 
     // Update credits
     let url = `${
-      process.env.NODE_ENV === "production"
+      process.env.NODE_ENV === "development"
         ? "http://local.nusfitness.com:5000/"
         : "https://salty-reaches-24995.herokuapp.com/"
     }updateCredits`;
@@ -575,7 +614,7 @@ bot.action(
 
     // Book the slot
     url = `${
-      process.env.NODE_ENV === "production"
+      process.env.NODE_ENV === "development"
         ? "http://local.nusfitness.com:5000/"
         : "https://salty-reaches-24995.herokuapp.com/"
     }book`;
@@ -647,7 +686,7 @@ bot.action(
     date.setHours(hour, minute, 0, 0);
 
     const url = `${
-      process.env.NODE_ENV === "production"
+      process.env.NODE_ENV === "development"
         ? "http://local.nusfitness.com:5000/"
         : "https://salty-reaches-24995.herokuapp.com/"
     }cancel`;
@@ -701,9 +740,10 @@ bot.action("Dashboard", async (ctx) => {
 // Current traffic
 bot.action("CurrentTraffic", async (ctx) => {
   const previousMenu = await getPreviousMenu(ctx, 1);
+  const { message_id } = await ctx.reply("Retrieving traffic...");
 
   const url = `${
-    process.env.NODE_ENV === "production"
+    process.env.NODE_ENV === "development"
       ? "http://local.nusfitness.com:5000/"
       : "https://salty-reaches-24995.herokuapp.com/"
   }telegram/currentTraffic`;
@@ -713,6 +753,7 @@ bot.action("CurrentTraffic", async (ctx) => {
   });
   const traffic = await res.json();
 
+  ctx.deleteMessage(message_id);
   ctx.replyWithHTML(
     stripIndents`
     <pre>
@@ -782,7 +823,7 @@ bot.action(/_Chart/, async (ctx) => {
   // Retrieve image buffer
   let buffer;
   await (async () => {
-    const browser = await puppeteer.launch({ headless: true });
+    const browser = await puppeteer.launch({ args: ["--no-sandbox"] });
     const page = await browser.newPage();
     page.setViewport({ width: 1920, height: 1080 });
     await page.goto("https://jereldlimjy.github.io/nusfitness");
@@ -791,7 +832,7 @@ bot.action(/_Chart/, async (ctx) => {
     // await page.click('svg[width="900"][height="250"]');
     await page.waitForTimeout(2000);
     buffer = await page.screenshot({
-      clip: { x: 20, y: 250, width: 1520, height: 600 },
+      clip: { x: 370, y: 200, width: 1520, height: 640 },
     });
   })();
   ctx.deleteMessage(message_id);
@@ -811,8 +852,7 @@ bot.action(/_Chart/, async (ctx) => {
 
 // Error handling
 bot.catch((err) => console.log(err));
-
-bot.launch();
+bot.startPolling();
 
 // Enable graceful stop
 process.once("SIGINT", () => bot.stop("SIGINT"));
