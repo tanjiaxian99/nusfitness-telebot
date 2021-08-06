@@ -1,6 +1,16 @@
 {
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "nodemon server.js"
+  },
   "dependencies": {
+    "common-tags": "^1.8.0",
+    "date-fns": "^2.22.1",
     "dotenv": "^10.0.0",
+    "express": "^4.17.1",
+    "node-fetch": "^2.6.1",
+    "nodemon": "^2.0.9",
+    "puppeteer": "^10.1.0",
     "telegraf": "^4.4.0"
   }
 }
