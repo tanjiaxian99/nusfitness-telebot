@@ -7,22 +7,24 @@ const { stripIndents } = require("common-tags");
 const { oneLine } = require("common-tags");
 const { addDays, addHours } = require("date-fns");
 const puppeteer = require("puppeteer");
-const wakeUpDyno = require("./wokeDyno.js");
 require("dotenv").config();
 
-const PORT = process.env.PORT || 4000;
+const bot = new Telegraf(process.env.TOKEN);
+
+// Set webhook
+bot.telegram.setWebhook(
+  `${process.env.BOT_URL}:443/${process.env.BOT_SECRET_PATH}`
+);
+app.use(bot.webhookCallback(`/${process.env.BOT_SECRET_PATH}`));
 
 // Connect express to keep port open
+const PORT = process.env.PORT || 4000;
 app.get("/", (req, res) => {
   res.send("Hello World!");
 });
 app.listen(PORT, () => {
   console.log(`Listening on port ${PORT}`);
-  wakeUpDyno("https://salty-castle-78284.herokuapp.com/");
 });
-
-const bot = new Telegraf(process.env.TOKEN);
-bot.telegram.deleteWebhook();
 
 const startMenu = async (ctx) => {
   try {
@@ -852,7 +854,6 @@ bot.action(/_Chart/, async (ctx) => {
 
 // Error handling
 bot.catch((err) => console.log(err));
-bot.startPolling();
 
 // Enable graceful stop
 process.once("SIGINT", () => bot.stop("SIGINT"));
