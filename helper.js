@@ -5,11 +5,7 @@ const updateMenu = async (ctx, currentMenu) => {
   try {
     const chat = await ctx.getChat();
 
-    const url = `${
-      process.env.NODE_ENV === "development"
-        ? "http://local.nusfitness.com:5000/"
-        : "https://salty-reaches-24995.herokuapp.com/"
-    }telegram/updateMenus`;
+    const url = `${process.env.BACKEND_URL}/telegram/updateMenus`;
 
     const res = await fetch(url, {
       method: "post",
@@ -29,11 +25,7 @@ const retrieveMenu = async (ctx, skips) => {
   try {
     const chat = await ctx.getChat();
 
-    const url = `${
-      process.env.NODE_ENV === "development"
-        ? "http://local.nusfitness.com:5000/"
-        : "https://salty-reaches-24995.herokuapp.com/"
-    }telegram/getPreviousMenu`;
+    const url = `${process.env.BACKEND_URL}/telegram/getPreviousMenu`;
 
     const res = await fetch(url, {
       method: "post",

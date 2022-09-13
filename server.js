@@ -31,11 +31,7 @@ const startMenu = async (ctx) => {
     ctx.deleteMessage();
     const chat = await ctx.getChat();
 
-    const url = `${
-      process.env.NODE_ENV === "development"
-        ? "http://local.nusfitness.com:5000/"
-        : "https://salty-reaches-24995.herokuapp.com/"
-    }telegram/isLoggedIn`;
+    const url = `${process.env.BACKEND_URL}/telegram/isLoggedIn`;
 
     const res = await fetch(url, {
       method: "post",
@@ -135,11 +131,7 @@ bot.action("Booking", async (ctx) => {
 bot.action("BookedSlots", async (ctx) => {
   const previousMenu = await getPreviousMenu(ctx, 1);
 
-  const url = `${
-    process.env.NODE_ENV === "development"
-      ? "http://local.nusfitness.com:5000/"
-      : "https://salty-reaches-24995.herokuapp.com/"
-  }bookedSlots`;
+  const url = `${process.env.BACKEND_URL}/bookedSlots`;
 
   const res = await fetch(url, {
     method: "post",
@@ -429,11 +421,7 @@ bot.action(/^[a-zA-Z ]+_\w{3}\s\w{3}\s\d{2}\s\d{4}$/, async (ctx) => {
   const assignedDate = new Date(date);
 
   // Get credits count
-  let url = `${
-    process.env.NODE_ENV === "development"
-      ? "http://local.nusfitness.com:5000/"
-      : "https://salty-reaches-24995.herokuapp.com/"
-  }creditsLeft`;
+  let url = `${process.env.BACKEND_URL}/creditsLeft`;
   let res = await fetch(url, {
     method: "post",
     headers: { "Content-Type": "application/json" },
@@ -446,11 +434,7 @@ bot.action(/^[a-zA-Z ]+_\w{3}\s\w{3}\s\d{2}\s\d{4}$/, async (ctx) => {
   const credits = data.credits;
 
   // Get slot count
-  url = `${
-    process.env.NODE_ENV === "development"
-      ? "http://local.nusfitness.com:5000/"
-      : "https://salty-reaches-24995.herokuapp.com/"
-  }slots`;
+  url = `${process.env.BACKEND_URL}/slots`;
   res = await fetch(url, {
     method: "post",
     headers: { "Content-Type": "application/json" },
@@ -467,11 +451,7 @@ bot.action(/^[a-zA-Z ]+_\w{3}\s\w{3}\s\d{2}\s\d{4}$/, async (ctx) => {
   }));
 
   // Get booked slots
-  url = `${
-    process.env.NODE_ENV === "development"
-      ? "http://local.nusfitness.com:5000/"
-      : "https://salty-reaches-24995.herokuapp.com/"
-  }bookedSlots`;
+  url = `${process.env.BACKEND_URL}/bookedSlots`;
   res = await fetch(url, {
     method: "post",
     headers: { "Content-Type": "application/json" },
@@ -587,11 +567,7 @@ bot.action(
     date.setHours(hour, minute, 0, 0);
 
     // Update credits
-    let url = `${
-      process.env.NODE_ENV === "development"
-        ? "http://local.nusfitness.com:5000/"
-        : "https://salty-reaches-24995.herokuapp.com/"
-    }updateCredits`;
+    let url = `${process.env.BACKEND_URL}/updateCredits`;
 
     let res = await fetch(url, {
       method: "post",
@@ -615,11 +591,7 @@ bot.action(
     }
 
     // Book the slot
-    url = `${
-      process.env.NODE_ENV === "development"
-        ? "http://local.nusfitness.com:5000/"
-        : "https://salty-reaches-24995.herokuapp.com/"
-    }book`;
+    url = `${process.env.BACKEND_URL}/book`;
 
     res = await fetch(url, {
       method: "post",
@@ -687,11 +659,7 @@ bot.action(
     const minute = parseInt(hourString.slice(2, 4));
     date.setHours(hour, minute, 0, 0);
 
-    const url = `${
-      process.env.NODE_ENV === "development"
-        ? "http://local.nusfitness.com:5000/"
-        : "https://salty-reaches-24995.herokuapp.com/"
-    }cancel`;
+    const url = `${process.env.BACKEND_URL}/cancel`;
 
     const res = await fetch(url, {
       method: "post",
@@ -744,11 +712,7 @@ bot.action("CurrentTraffic", async (ctx) => {
   const previousMenu = await getPreviousMenu(ctx, 1);
   const { message_id } = await ctx.reply("Retrieving traffic...");
 
-  const url = `${
-    process.env.NODE_ENV === "development"
-      ? "http://local.nusfitness.com:5000/"
-      : "https://salty-reaches-24995.herokuapp.com/"
-  }telegram/currentTraffic`;
+  const url = `${process.env.BACKEND_URL}/telegram/currentTraffic`;
 
   const res = await fetch(url, {
     method: "get",
